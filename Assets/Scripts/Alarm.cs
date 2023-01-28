@@ -1,48 +1,46 @@
+using System.Collections;
 using UnityEngine;
-using UnityEngine.Events;
 
 public class Alarm : MonoBehaviour
 {
-    [SerializeField] private UnityEvent _reached = new UnityEvent();
     [SerializeField] private AudioSource _alarmSignal;
+    [SerializeField] private MotionSensor _motionSensor;
 
     private float _minSoundVolume = 0f;
     private float _maxSoundVolume = 1f;
-    private float _strengthChangeVolume = 0.3f;
-
-    public event UnityAction Reached
-    {
-        add => _reached.AddListener(value);
-        remove => _reached.RemoveListener(value);
-    }
-
-    public bool IsReached { get; private set; }
-
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        if (collision.TryGetComponent<Thief>(out Thief thief))
-        {
-            IsReached = true;
-            _reached?.Invoke();
-        }
-    }
-    private void OnTriggerExit2D(Collider2D collision)
-    {
-        IsReached = false;
-    }
+    private float _strengthChangeVolume = 0.001f;
+    private float _countRepeats = 10;
 
     private void Update()
     {
-        if (IsReached)
+        if (_motionSensor.IsReached)
         {
-            _alarmSignal.GetComponent<AudioSource>().volume = Mathf.MoveTowards(_alarmSignal.GetComponent<AudioSource>().volume,
-                _maxSoundVolume, _strengthChangeVolume * Time.deltaTime);
+            StopCoroutine(FadeAway());
+            StartCoroutine(FadeIn());
         }
 
         else
         {
-            _alarmSignal.GetComponent<AudioSource>().volume = Mathf.Clamp(_alarmSignal.GetComponent<AudioSource>().volume
-                - _strengthChangeVolume * Time.deltaTime, _minSoundVolume, _maxSoundVolume);
+            StopCoroutine(FadeIn());
+            StartCoroutine(FadeAway());
+        }
+    }
+
+    private IEnumerator FadeIn()
+    {
+        for (int index = 0; index < _countRepeats; index++)
+        {
+            _alarmSignal.volume = Mathf.MoveTowards(_alarmSignal.volume, _maxSoundVolume, _strengthChangeVolume);
+            yield return null;
+        }
+    }
+
+    private IEnumerator FadeAway()
+    {
+        for (int index = 0; index < _countRepeats; index++)
+        {
+            _alarmSignal.volume = Mathf.MoveTowards(_alarmSignal.volume, _minSoundVolume, _strengthChangeVolume);
+            yield return null;
         }
     }
 }
