@@ -4,6 +4,7 @@ using UnityEngine.Events;
 public class MotionSensor : MonoBehaviour
 {
     [SerializeField] private UnityEvent _reached = new UnityEvent();
+    [SerializeField] private Alarm _alarm;
 
     public event UnityAction Reached
     {
@@ -17,13 +18,17 @@ public class MotionSensor : MonoBehaviour
     {
         if (collision.TryGetComponent<Thief>(out Thief thief))
         {
-            IsReached = true;
+            IsReached = true; 
             _reached?.Invoke();
+            StopCoroutine(_alarm.FadeAway());
+            StartCoroutine(_alarm.FadeIn());
         }
     }
 
     private void OnTriggerExit2D(Collider2D collision)
     {
         IsReached = false;
+        StopCoroutine(_alarm.FadeIn());
+        StartCoroutine(_alarm.FadeAway());
     }
 }
