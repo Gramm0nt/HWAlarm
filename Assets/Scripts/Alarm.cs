@@ -15,7 +15,6 @@ public class Alarm : MonoBehaviour
 
     public void SetVolume()
     {
-
         if (_softVolumeChange != null)
         {
             StopCoroutine(_softVolumeChange);
