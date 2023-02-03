@@ -6,32 +6,48 @@ public class Alarm : MonoBehaviour
     [SerializeField] private AudioSource _alarmSignal;
     [SerializeField] private MotionSensor _motionSensor;
 
+    private Coroutine _softVolumeChange;
     private float _minSoundVolume = 0f;
     private float _maxSoundVolume = 1f;
     private float _strengthChangeVolume = 0.001f;
+    private float _targetVolume;
+    private float _waitingTime = 0.3f;
 
     public void SetVolume()
     {
-        StartCoroutine(ChangeVolume());
-    }
 
-    private IEnumerator ChangeVolume()
-    {
-        while (_motionSensor.IsReached)
+        if (_softVolumeChange != null)
         {
-            ChangeSignal(_maxSoundVolume);
-            yield return null;
+            StopCoroutine(_softVolumeChange);
         }
 
-        while (_motionSensor.IsReached == false)
+        _softVolumeChange = StartCoroutine(SetTargetVolume());
+    }
+
+    public void Update()
+    {
+        if (_motionSensor.IsReached)
         {
-            ChangeSignal(_minSoundVolume);
-            yield return null;
+            _targetVolume = _maxSoundVolume;
+        }
+
+        else
+        {
+            _targetVolume = _minSoundVolume;
         }
     }
 
-    private void ChangeSignal(float targetVolume)
+    private IEnumerator SetTargetVolume()
     {
-        _alarmSignal.volume = Mathf.MoveTowards(_alarmSignal.volume, targetVolume, _strengthChangeVolume);
+        while (true)
+        {
+            while (_alarmSignal.volume != _targetVolume)
+            {
+                _alarmSignal.volume = Mathf.MoveTowards(_alarmSignal.volume, _targetVolume, _strengthChangeVolume);
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(_waitingTime);
+        }
     }
 }
