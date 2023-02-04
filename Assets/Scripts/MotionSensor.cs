@@ -3,27 +3,24 @@ using UnityEngine.Events;
 
 public class MotionSensor : MonoBehaviour
 {
-    [SerializeField] private UnityEvent _reached = new UnityEvent();
+    [SerializeField] private UnityEvent<bool> _reached = new UnityEvent<bool>();
 
-    public event UnityAction Reached
+    public event UnityAction<bool> Reached
     {
         add => _reached.AddListener(value);
         remove => _reached.RemoveListener(value);
     }
 
-    public bool IsReached { get; private set; }
-
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.TryGetComponent<Thief>(out Thief thief))
         {
-            IsReached = true; 
-            _reached?.Invoke();
+            _reached?.Invoke(true);
         }
     }
 
     private void OnTriggerExit2D(Collider2D collision)
     {
-        IsReached = false;
+        _reached?.Invoke(false);
     }
 }

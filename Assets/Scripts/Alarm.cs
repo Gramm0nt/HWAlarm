@@ -11,21 +11,15 @@ public class Alarm : MonoBehaviour
     private float _maxSoundVolume = 1f;
     private float _strengthChangeVolume = 0.001f;
     private float _targetVolume;
-    private float _waitingTime = 0.3f;
 
-    public void SetVolume()
+    private void SetVolume(bool IsReached)
     {
         if (_softVolumeChange != null)
         {
             StopCoroutine(_softVolumeChange);
         }
-
-        _softVolumeChange = StartCoroutine(SetTargetVolume());
-    }
-
-    public void Update()
-    {
-        if (_motionSensor.IsReached)
+        
+        if (IsReached)
         {
             _targetVolume = _maxSoundVolume;
         }
@@ -34,19 +28,26 @@ public class Alarm : MonoBehaviour
         {
             _targetVolume = _minSoundVolume;
         }
+
+        _softVolumeChange = StartCoroutine(SetTargetVolume());
+    }
+
+    private void OnEnable()
+    {
+        _motionSensor.Reached += SetVolume;
+    }
+
+    private void OnDisable()
+    {
+        _motionSensor.Reached -= SetVolume;
     }
 
     private IEnumerator SetTargetVolume()
     {
-        while (true)
+        while (_alarmSignal.volume != _targetVolume)
         {
-            while (_alarmSignal.volume != _targetVolume)
-            {
-                _alarmSignal.volume = Mathf.MoveTowards(_alarmSignal.volume, _targetVolume, _strengthChangeVolume);
-                yield return null;
-            }
-
-            yield return new WaitForSeconds(_waitingTime);
+            _alarmSignal.volume = Mathf.MoveTowards(_alarmSignal.volume, _targetVolume, _strengthChangeVolume);
+            yield return null;
         }
     }
 }
